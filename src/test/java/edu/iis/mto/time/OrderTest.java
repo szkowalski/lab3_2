@@ -46,4 +46,23 @@ class OrderTest {
         catch (OrderExpiredException e) {}
     }
 
+    @Test
+    void expiredOrderStatusTest() {
+        Order order = new Order(mockClock);
+
+        Instant submitInstant = Instant.parse("2020-12-20T20:20:20.00Z");
+        Instant confirmedAfterExpiredInstant = submitInstant.plus(Order.VALID_PERIOD_HOURS + 1, ChronoUnit.HOURS);
+
+        when(mockClock.getZone()).thenReturn(ZoneId.systemDefault());
+        when(mockClock.instant()).thenReturn(submitInstant).thenReturn(confirmedAfterExpiredInstant);
+
+        order.submit();
+
+        try {
+            order.confirm();
+        } catch (OrderExpiredException e) {
+            assertEquals(order.getOrderState(), Order.State.CANCELLED);
+        }
+    }
+
 }
