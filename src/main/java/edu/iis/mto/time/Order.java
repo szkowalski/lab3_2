@@ -5,15 +5,24 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.time.Clock;
+
 public class Order {
 
-    private static final long VALID_PERIOD_HOURS = 24;
+    public static final long VALID_PERIOD_HOURS = 24;
     private State orderState;
     private List<OrderItem> items = new ArrayList<>();
     private LocalDateTime subbmitionDate;
 
+    private Clock clock;
+
     public Order() {
         orderState = State.CREATED;
+        this.clock = Clock.systemDefaultZone();
+    }
+    public Order(Clock clock) {
+        orderState = State.CREATED;
+        this.clock = clock;
     }
 
     public void addItem(OrderItem item) {
@@ -28,13 +37,13 @@ public class Order {
         requireState(State.CREATED);
 
         orderState = State.SUBMITTED;
-        subbmitionDate = LocalDateTime.now();
+        subbmitionDate = LocalDateTime.now(clock);
 
     }
 
     public void confirm() {
         requireState(State.SUBMITTED);
-        long hoursElapsedAfterSubmittion = subbmitionDate.until(LocalDateTime.now(), ChronoUnit.HOURS);
+        long hoursElapsedAfterSubmittion = subbmitionDate.until(LocalDateTime.now(clock), ChronoUnit.HOURS);
         if (hoursElapsedAfterSubmittion > VALID_PERIOD_HOURS) {
             orderState = State.CANCELLED;
             throw new OrderExpiredException();
